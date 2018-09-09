@@ -1,0 +1,118 @@
+#!/bin/bash
+set -e
+
+mkdir $1
+cd $1
+
+gradle init --type java-application
+
+
+rm src/main/java/App.java
+mkdir -p src/main/java/com/saungkertas/backyard
+
+rm src/test/java/AppTest.java
+mkdir -p src/test/java/com/saungkertas/backyard
+
+cat > build.gradle << EOF
+plugins {
+    id 'java'
+    id 'jacoco'
+    id 'pmd'
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    testImplementation 'org.hamcrest:hamcrest-library:1.3'
+}
+
+repositories {
+    jcenter()
+}
+
+test {
+  testLogging {
+    exceptionFormat "full"
+    events "passed", "failed"
+  } 
+}
+
+jacoco {
+    toolVersion = "0.8.1"
+}
+
+jacocoTestReport {
+    reports {
+        html.enabled = true
+        xml.enabled = false
+        csv.enabled = false
+    }
+}
+EOF
+
+rootProject=`basename $1`
+
+cat > settings.gradle << EOF
+rootProject.name = '$rootProject'
+EOF
+
+touch README.md
+cat > README.md << EOF
+# Project Description
+
+## Dev Environment Setup for OS X.
+* Java v8
+\`\`\`
+$ brew cask install java8
+\`\`\`
+[To install java please refer](https://docs.oracle.com/javase/10/install/overview-jdk-10-and-jre-10-installation.htm)
+* Gradle v5.0
+
+[To install gradle please refer](https://gradle.org/install/)
+
+## Test instructions
+\`\`\`
+$ ./gradlew clean test
+\`\`\`
+
+## Build instructions
+\`\`\`
+$ ./gradlew build
+\`\`\`
+
+## Code Coverage instructions
+\`\`\`
+$ ./gradlew clean build jacocoTestReport
+\`\`\`
+
+## Code complexity
+\`\`\`
+$ ./gradlew clean build check
+\`\`\`
+
+## How to use
+
+### Author
+EOF
+
+touch LaundryList.md
+cat > LaundryList.md << EOF
+# Laundry List
+EOF
+
+git init
+touch .gitignore
+cat > .gitignore << EOF
+.gradle/
+build/
+out/
+.idea/
+*.iml
+*.iws
+*.ipr
+*~
+.DS_Store
+EOF
+
+./gradlew wrapper --gradle-version=5.0-20180825235911+0000
+
+exit 0
