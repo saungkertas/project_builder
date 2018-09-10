@@ -1,0 +1,227 @@
+#!/bin/bash
+set -e
+
+colour=$(tput setaf 4)
+normal=$(tput sgr0)
+
+if [[ ! -e $1 ]]; then
+    mkdir $1
+elif [[ ! -d $1 ]]; then
+    echo "$1 already exists but is not a directory"
+    exit 0
+fi
+cd $1
+
+if [[ ! -e lib ]]; then
+    mkdir lib
+elif [[ ! -d lib ]]; then
+    echo "lib already exists but is not a directory"
+    exit 0
+fi
+
+if [[ ! -e spec ]]; then
+    mkdir spec
+elif [[ ! -d spec ]]; then
+    echo "spec already exists but is not a directory"
+    exit 0
+fi
+
+gem install bundler -v 1.16.3
+
+touch Gemfile
+cat > Gemfile << EOF
+ruby '2.5.1'
+
+source 'https://rubygems.org'
+
+group :test do
+  gem 'cycromatic'
+  gem 'rspec'
+  gem 'simplecov'
+end
+EOF
+
+touch LaundryList.md
+cat > LaundryList.md << EOF
+# Laundry List
+EOF
+
+bundle install
+rspec --init
+
+cat > spec/spec_helper.rb << EOF
+require 'simplecov'
+
+SimpleCov.start
+EOF
+
+cat > .rspec << EOF
+--require spec_helper
+--format documentation
+EOF
+
+if [[ ! -e .git ]]; then
+    git init
+    printf "\n\n${colour}Initializing git${normal}\n\n"
+else
+    printf "\n\n${colour}git already exists${normal}\n\n"
+fi
+
+if [ -e .gitignore ]
+then
+    printf "\n\n${colour}gitignore already exists${normal}\n\n"
+else
+    touch .gitignore
+    cat > .gitignore << EOF
+*.sw?
+.DS_Store
+coverage
+doc
+pkg
+Gemfile.lock
+.bundle
+*.rbc
+bin
+bundle
+.bundle
+specs.out
+*.gem
+.vscode
+.idea/
+*~
+EOF
+    printf "\n\n${colour}sample gitignore created${normal}\n\n"
+fi
+
+touch README.md
+cat > README.md << EOF
+# Project Description
+
+## Dev Environment Setup for OS X.
+* Ruby 2.5.1
+\`\`\`
+$ brew install ruby@2.5
+\`\`\`
+
+[To install ruby on other platform please refer](https://www.ruby-lang.org/en/documentation/installation/)
+* Bundler v1.16.3
+\`\`\`
+$ gem install bundler -v 1.16.3
+\`\`\`
+
+## Test instructions
+\`\`\`
+$ bundle exec rspec
+\`\`\`
+
+## Code Coverage
+\`\`\`
+$ bundle exec rspec
+\`\`\`
+It will create a folder with the name coverage and on clicking the index.html inside coverage folder you can find the code coverage.
+
+## Using Cycromatic
+\`\`\`
+$ cycromatic .
+\`\`\`
+It will output the cyclomatic complexity of the code.
+
+[To know further please see](https://github.com/soutaro/cycromatic)
+
+## How to use
+
+### Author
+EOF
+printf "\n\n${colour}Sample readme created\n\n***Plaese update readme before coding anything else***${normal}\n\n"
+
+if ! [ -z "$2" ] 
+  then
+    touch README.md
+    cat > README.md << EOF
+# Project Description
+$2
+
+## Dev Environment Setup for OS X.
+* Ruby 2.5.1
+\`\`\`
+$ brew install ruby@2.5
+\`\`\`
+
+[To install ruby on other platform please refer](https://www.ruby-lang.org/en/documentation/installation/)
+* Bundler v1.16.3
+\`\`\`
+$ gem install bundler -v 1.16.3
+\`\`\`
+
+## Test instructions
+\`\`\`
+$ bundle exec rspec
+\`\`\`
+
+## Code Coverage
+\`\`\`
+$ bundle exec rspec
+\`\`\`
+It will create a folder with the name coverage and on clicking the index.html inside coverage folder you can find the code coverage.
+
+## Using Cycromatic
+\`\`\`
+$ cycromatic .
+\`\`\`
+It will output the cyclomatic complexity of the code.
+
+[To know further please see](https://github.com/soutaro/cycromatic)
+
+## How to use
+
+### Author
+$3
+EOF
+    printf "\n\n${colour}Updated the readme${normal}\n\n"
+else 
+  if ! [ -z "$2" ] 
+    then
+      printf "\n\n${colour}Give both project description and Authors to automatic readme update.\n\nReadme is not updated${normal}\n\n"
+  fi
+  exit 0
+fi
+
+
+if ! [ -z "$4" ]
+  then
+    git add .
+    commit_message="$4"
+    git commit -m "$commit_message"
+    printf "\n\n***${colour}Commited with updated readme${normal}***\n\n"
+else 
+    printf "\n\n***${colour}Please do Readme commit before writing the code${normal}***\n\n"
+    exit 0
+fi
+
+if ! [ -z "$5" ]
+  then
+    className="$(tr [A-Z] [a-z] <<< "$5")"
+    printf "${colour}creating class and spec files with name as: $className...${normal}\n\n"
+    touch lib/"$className".rb
+    cat > lib/"$className".rb << EOF
+module Saungkertas
+  class $5
+  end
+end
+EOF
+    touch spec/"$className"_spec.rb
+    cat > spec/"$className"_spec.rb << EOF
+require './lib/$5'
+
+module Saungkertas
+  describe 'In $5' do
+  end
+end
+EOF
+    printf "${colour}***Done***${normal}\n\n"
+    printf "${colour}***runing rspec***${normal}\n\n"
+    rspec
+    printf "${colour}\n\n***runing cyclomatic complexity***${normal}\n\n"
+    cycromatic .
+    printf "${colour}\n\n***Every thing done start with writing specs***${normal}\n\n"
+fi
